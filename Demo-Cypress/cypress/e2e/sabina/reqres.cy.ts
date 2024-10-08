@@ -64,7 +64,7 @@ describe("Testing API", () => {
 });
 
 it("Test 2 GET single user", () => {
-  cy.intercept('GET', '/api/users/2', {
+  /*cy.intercept('GET', '/api/users/2', {
     statusCode: 200,
     body: {
       "data": {
@@ -80,7 +80,7 @@ it("Test 2 GET single user", () => {
       }
     }
   }).as('getUser');
-
+*/
   cy.request('GET', 'https://reqres.in/api/users/2').then((response) => {
     expect(response.status).to.eq(200);
     expect(response.body.data).to.include({
@@ -96,7 +96,7 @@ it("Test 2 GET single user", () => {
   });
 });
 
-it("Test 2 GET Single User", () => {
+it("Test 2.1 GET Single User", () => {
   cy.intercept({
     method: 'GET',
     url: '/api/users/2'
@@ -106,7 +106,6 @@ it("Test 2 GET Single User", () => {
 
   cy.get('li[data-id="users-single"] a').click(); 
 
-  
   cy.wait('@getSingleUser').then((interception) => {
     if (interception.response) {
       const responseBody = interception.response.body;
@@ -126,34 +125,6 @@ it("Test 2 GET Single User", () => {
       });
     }
   });
-});
-
-
-it('Test 2 GET single user', () => {
-  cy.intercept('GET', '/api/users/2', {
-    statusCode: 200,
-    body: {
-      data: {
-        id: 2,
-        email: "janet.weaver@reqres.in",
-        first_name: "Janet",
-        last_name: "Weaver",
-        avatar: "https://reqres.in/img/faces/2-image.jpg"
-      },
-      support: {
-        url: "https://reqres.in/#support-heading",
-        text: "To keep ReqRes free, contributions towards server costs are appreciated!"
-      }
-    }
-  })
-
-  cy.request('/api/users/2').then((response) => {
-    expect(response.status).to.eq(200);
-    expect(response.body.data.first_name).to.eq('Janet');
-    expect(response.body.data.last_name).to.eq('Weaver');
-    expect(response.body.data.avatar).to.eq('https://reqres.in/img/faces/2-image.jpg');
-  });
-
 });
 
 it("Test 2.1 GET",() =>{
@@ -264,7 +235,6 @@ it("Test 4.1 POST create user", () => {
   });
 });
 
-///////maine
 it("Test 5 PUT update user", () => {
   cy.intercept('PUT', '/api/users/2', {
     statusCode: 200,
@@ -292,7 +262,7 @@ it("Test 5 PUT update user", () => {
   });
 });
  
-it.only("Test 5.1 PUT update user",() => {
+it("Test 5.1 PUT update user",() => {
   cy.intercept({ 
     method: 'PUT',
     url: '/api/users/2',
@@ -312,24 +282,254 @@ it.only("Test 5.1 PUT update user",() => {
 })
 })
 
-
-it("Test 6 DELETE Delete", () => {
-  cy.intercept('DELETE', '/api/users/2', (req) => {
-    req.continue((res) => {
-      res.statusCode = 204;
-      res.body = null;
-    });
-  });
+it("Test 6 PATCH update user", () => {
+  cy.intercept('PATCH', '/api/users/2', {
+    statusCode: 200,
+    body: {
+      name: "morpheus",
+      job: "zion resident",
+      updatedAt: "2024-10-04T09:19:46.735Z"
+    }
+  }).as('updateUser');
 
   cy.request({
-    method: 'DELETE',
-    url: '/api/users/2'
+    method: 'PATCH',
+    url: '/api/users/2',
+    body: {
+      "name": "morpheus",
+      "job": "zion resident"
+    }
   }).then((response) => {
-    expect(response.status).to.eq(204);
+    if(response){
+    expect(response.status).to.eq(200);
+    expect(response.body).to.have.property('name', 'morpheus');
+    expect(response.body).to.have.property('job', 'zion resident');
+    expect(response.body).to.have.property('updatedAt');
+    }
+  });
+});
+ 
+it("Test 6.1 PATCH update user",() => {
+  cy.intercept({ 
+    method: 'PATCH',
+    url: '/api/users/2',
+    }).as('UpdateUser');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="patch"] a').click(); 
+  cy.wait('@UpdateUser').then((interception) => { 
+      if (interception.response) {
+        expect(interception.response.statusCode).to.eq(200);
+        const responseBody = interception.response.body;
+        expect(responseBody).to.have.property('name', 'morpheus');
+        expect(responseBody).to.have.property('job', 'zion resident');
+        expect(responseBody).to.have.property('updatedAt');
+      }
+  
+})
+})
+
+it("Test 7 DELETE Delete", () => {
+  cy.intercept(
+    {
+      method: 'DELETE',
+      url: '/api/users/2',
+    }).as('DeleteUser')
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="delete"] a').click(); 
+  cy.wait('@DeleteUser').then((interception) => { 
+      if (interception.response) {
+        expect(interception.response.statusCode).to.eq(204);
+        expect(interception.response.body).to.eq("");}
+      })
+
+});
+
+it("Test 7.1 DELETE Delete", () => {
+  cy.intercept(
+    {
+      method: 'DELETE',
+      url: '/api/users/2',
+    }).as('DeleteUser')
+
+  cy.request({
+        method: 'DELETE',
+        url: '/api/users/2',
+      }).then((response) => {
+        if(response){
+        expect(response.status).to.eq(204);
+        expect(response.body).to.have.eq("");
+        }
+  });
+});
+
+it("Test 8 POST register-successful",() => {
+  
+  cy.intercept('POST', '/api/register', {
+    statusCode: 200,
+    body: {
+      id: 4,
+      token: "QpwL5tke4Pnpja7X4"
+    }
+  }).as('RegisterUser');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="register-successful"] a').click();
+  cy.wait('@RegisterUser').then((interception) => {
+    if(interception.response){
+     expect(interception.response.statusCode).to.eq(200);
+     const responseBody = interception.response.body;
+     expect(responseBody).to.have.property('id', 4);
+     expect(responseBody).to.have.property('token', "QpwL5tke4Pnpja7X4");
+    }
+  });
+})
+
+it("Test 8.1 POST register-successful",() => {
+
+  cy.request({
+    method: 'POST',
+    url: '/api/register',
+    body:
+    {
+      "email": "eve.holt@reqres.in",
+      "password": "pistol"
+    }
+  }).then((response) => {
+     expect(response.status).to.eq(200);
+     const responseBody = response.body;
+     expect(responseBody).to.have.property('id', 4);
+     expect(responseBody).to.have.property('token', "QpwL5tke4Pnpja7X4");
+    })
+})
+
+it("Test 9 POST register-unsuccessful",() => {
+  
+  cy.intercept('POST', '/api/register').as('RegisterUser');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="register-unsuccessful"] a').click();
+  cy.wait('@RegisterUser').then((interception) => {
+    if(interception.response){
+     expect(interception.response.statusCode).to.eq(400);
+     const responseBody = interception.response.body;
+     expect(responseBody).to.have.property('error', "Missing password");
+    }
+  });
+})
+
+it("Test 9.1 POST register-unsuccessful",() => {
+  cy.request({
+    method: 'POST',
+    url: '/api/register',
+    body:
+    {
+      "email": "eve.holt@reqres.in"
+    },
+    failOnStatusCode: false // Prevent Cypress from failing the test on a 4xx or 5xx status code
+  }).then((response) => {
+    if(response){
+     expect(response.status).to.eq(400);
+     const responseBody = response.body;
+     expect(responseBody).to.have.property('error', "Missing password");
+    }
+  });
+})
+
+it("Test 10.1 POST login-successful", () => {
+  cy.request({
+    method: 'POST',
+    url: '/api/login',
+    body: {
+      "email": "eve.holt@reqres.in",
+      "password": "cityslicka"
+    }
+  }).then((response) => {
+    expect(response.status).to.eq(200);
+    const responseBody = response.body;
+    expect(responseBody).to.have.property('token', "QpwL5tke4Pnpja7X4");
   });
 });
 
 
+it("Test 10 POST login-successful",() => {
+
+  cy.intercept('POST', '/api/login').as('Login');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="login-successful"] a').click();
+  cy.wait('@Login').then((interception) => {
+    if(interception.response){
+      expect(interception.response.statusCode).to.eq(200);
+      const responseBody = interception.response.body;
+      expect(responseBody).to.have.property('token',"QpwL5tke4Pnpja7X4");
+     }
+  })
+})
+
+it("Test 11 POST login-unsuccessful",() => {
+
+  cy.intercept('POST', '/api/login').as('LoginUnsuccessful');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="login-unsuccessful"] a').click();
+  cy.wait('@LoginUnsuccessful').then((interception) => {
+    if(interception.response){
+      expect(interception.response.statusCode).to.eq(400);
+      const responseBody = interception.response.body;
+      expect(responseBody).to.have.property('error',"Missing password");
+     }
+  })
+})
+
+it("Test 11.1 POST login-unsuccessful", () => {
+  cy.request({
+    method: 'POST',
+    url: '/api/login',
+    body: {
+      "email": "eve.holt@reqres.in"
+    },
+    failOnStatusCode: false
+  }).then((response) => {
+    expect(response.status).to.eq(400);
+    const responseBody = response.body;
+    expect(responseBody).to.have.property('error', "Missing password");
+  });
+});
+
+it("Test 12 GET Delayed-Response ",() => {
+
+  cy.intercept('GET', '/api/users?delay=3').as('GetUsers');
+
+  cy.visit('https://reqres.in/');
+  cy.get('li[data-id="delay"] a').click().then(() => {
+    cy.log('Clicked the delay link');
+  });
+  cy.wait('@GetUsers', { timeout: 5000 }).then((interception) => {
+    if(interception.response){
+      expect(interception.response.statusCode).to.eq(200);
+      const responseBody = interception.response.body;
+      expect(responseBody).to.have.property('page', 1);
+      expect(responseBody).to.have.property('per_page', 6);
+      expect(responseBody).to.have.property('total', 12);
+      expect(responseBody.total_pages).to.eq(2);
+      expect(responseBody.data).to.have.length(6);
+      expect(responseBody.data[0]).to.include({
+            id: 1,
+            email: "george.bluth@reqres.in",
+            first_name: "George",
+            last_name: "Bluth",
+            avatar: "https://reqres.in/img/faces/1-image.jpg"
+       });
+      expect(responseBody.support.url).to.eq("https://reqres.in/#support-heading");
+       expect(responseBody.support.text).to.eq("To keep ReqRes free, contributions towards server costs are appreciated!");
+  
+    }
+
+  })
+})
+
+//////////////////////////////////////////
 it("GET Single Resource Test", () => {
   cy.intercept('/api/unknown/2', (req) => {
     req.continue((res) => {
@@ -349,10 +549,11 @@ it("GET Single Resource Test", () => {
     })
   })
 })
-})
 
-/*
-  // Definire tipuri pentru request și response
+
+
+////////////////////////////////////////////////////////////////////////////////
+it("POST",() => {
   type CustomRequest = {
     email: string;
     password: string;
@@ -377,8 +578,8 @@ it("GET Single Resource Test", () => {
         // Setăm statusul HTTP la 201 Created
         res.statusCode = 200;
       });
-     }
-    });
-
-
-  */
+    }
+    })
+  })
+  
+})
